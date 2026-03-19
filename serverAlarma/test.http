@@ -1,0 +1,9 @@
+### Crear un nuevo usuario
+POST http://localhost:8080/api/usuarios
+Content-Type: application/json
+
+{
+  "username": "Fern",
+  "password": "frieren-is-the-best",
+  "type": false
+}
