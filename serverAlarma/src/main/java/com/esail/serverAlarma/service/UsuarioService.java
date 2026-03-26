@@ -25,16 +25,19 @@ public class UsuarioService {
     }
 
     public Usuario obtenerUsuariosPorUsername(String username) {
-        List<Usuario> usuarios = usuarioRepository.findAll();
+        return usuarioRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    }
+
+    // Esto tiene una forma más cutre de hacerlo ->
+    /*
+    List<Usuario> usuarios = usuarioRepository.findAll();
         for(Usuario usuario : usuarios){
             if(usuario.getUsername().equalsIgnoreCase(username)){
                 return usuario;
             }
         }
         return null;
-    }
-
-    // Esto tiene una forma pro de hacerlo ->      return usuarioRepository.findByUsername(username);
+     */
 
     public Usuario obtenerUsuarioPorId(Integer id){
         return usuarioRepository.findById(id).orElseThrow(()-> new RuntimeException("Usuario no encontrado"));
