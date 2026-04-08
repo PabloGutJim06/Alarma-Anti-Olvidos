@@ -1,3 +1,4 @@
+//Vamos a utilizar esta clase para proteger la integridad de los datos, inyectando el el usuarioRepository para verificar que el usuario existe antes de  asignarle una jornda
 package com.esail.serverAlarma.service;
 
 import com.esail.serverAlarma.models.Jornada;
@@ -26,8 +27,8 @@ public class JornadaService {
      * @return el objeto jornada que se guarda.
      */
     public Jornada crearJornada(Integer usuarioId, Jornada jornada){
-        Usuario usuario = usuarioRepository.findById(usuarioId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        jornada.setUsuario(usuario);
+        Usuario usuario = usuarioRepository.findById(usuarioId).orElseThrow(() -> new RuntimeException("Usuario no encontrado")); //Buscamos que exista el usuario
+        jornada.setUsuario(usuario); //Asignamos el usuario a la jornada
         return jornadaRepository.save(jornada);
     }
 

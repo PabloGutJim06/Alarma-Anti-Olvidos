@@ -55,7 +55,7 @@ public class UsuariosRestController {
      * @return un usuario que coincida con el ID que se ha introducido
      */
     @GetMapping("/{id:\\d+}")
-    public Usuario obtenerUsuarioPorId( @PathVariable Integer id) {
+    public Usuario obtenerUsuarioPorId(@PathVariable Integer id) {
         return usuarioService.obtenerUsuarioPorId(id);
     }
 
