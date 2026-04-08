@@ -1,9 +1,12 @@
 package com.esail.serverAlarma.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 // --- Clase POJO Jornada Laboral --- //
 @Entity
@@ -29,6 +32,10 @@ public class Jornada {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
+
+    @OneToMany(mappedBy = "jornada", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Registro> registros =  new ArrayList<>();
 
     protected Jornada() {}
 
@@ -88,5 +95,20 @@ public class Jornada {
 
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
+    }
+
+    public List<Registro> getRegistros() {return registros;}
+
+    public void setRegistros(List<Registro> registros) {this.registros = registros;}
+
+    // --- METODO DE CONVENIENCIA --- //
+    public void addRegistro(Registro registro){
+        this.registros.add(registro);
+        registro.setJornada(this);
+    }
+
+    public void  removeRegistro(Registro registro){
+        this.registros.remove(registro);
+        registro.setJornada(null);
     }
 }
