@@ -98,4 +98,14 @@ public class UsuariosRestController {
     public void eliminarUsuarioPorUsername(@PathVariable String username) {
         usuarioService.eliminarUsuarioPorUsername(username);
     }
+
+    /**
+     * Endpoint para comprobar si un usuario existe
+     * @param username El nombre de usuario que viaja en la URL
+     * @return true o false
+     */
+    @GetMapping("/existe/{username}")
+    public boolean verificarUsuarioPorUsername(@PathVariable String username) {
+        return usuarioService.existeUsuarioPorUsername(username);
+    }
 }

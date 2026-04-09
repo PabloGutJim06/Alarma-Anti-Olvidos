@@ -71,5 +71,14 @@ public class UsuarioService {
         usuarioRepository.delete(u);
     }
 
+    /**
+     * Verificar si un usuario ya existe en la Base de Datos usando su username
+     * @param username El nombre de usuario a comprobar
+     * @return true si existe, false si no
+     */
+    public boolean existeUsuarioPorUsername(String username) {
+        return usuarioRepository.existsByUsername(username);
+    }
+
 
 }
