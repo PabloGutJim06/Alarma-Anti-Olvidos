@@ -1,6 +1,7 @@
 package com.esail.serverAlarma.controllers;
 
 import com.esail.serverAlarma.dto.LoginRequestDTO;
+import com.esail.serverAlarma.dto.UsuarioResponseDTO;
 import com.esail.serverAlarma.models.Usuario;
 import com.esail.serverAlarma.service.UsuarioService;
 import org.springframework.web.bind.annotation.*;
@@ -116,5 +117,10 @@ public class UsuariosRestController {
                 login.getUsername(),
                 login.getPassword()
         );
+    }
+
+    @GetMapping("/me/{username}")
+    public UsuarioResponseDTO obtenerUsuarioConSusJornadas(@PathVariable String username) {
+        return usuarioService.obtenerUsuarioConJornada(username);
     }
 }

@@ -1,5 +1,7 @@
 package com.esail.serverAlarma.service;
 
+import com.esail.serverAlarma.dto.JornadaDTO;
+import com.esail.serverAlarma.dto.UsuarioResponseDTO;
 import com.esail.serverAlarma.models.Usuario;
 import com.esail.serverAlarma.repo.UsuarioRepository;
 import org.springframework.stereotype.Service;
@@ -84,4 +86,19 @@ public class UsuarioService {
         return usuarioRepository.findByUsername(username).map(usuario -> usuario.getPassword().equals(password)).orElse(false);
     }
 
+    public UsuarioResponseDTO obtenerUsuarioConJornada(String username){
+        Usuario usuario = usuarioRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("No encontrado"));
+
+        List<JornadaDTO> jornadas = usuario.getJornadas().stream()
+                .map(j -> new JornadaDTO(j.getId(), j.getDia_semana(),j.getType(),j.getHora_inicio(),j.getHora_fin()))
+                .toList();
+
+        return new UsuarioResponseDTO(
+                usuario.getId(),
+                usuario.getUsername(),
+                usuario.isType(),
+                jornadas
+        );
+    }
 }
