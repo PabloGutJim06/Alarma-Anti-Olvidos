@@ -1,5 +1,6 @@
 package com.esail.serverAlarma.controllers;
 
+import com.esail.serverAlarma.dto.LoginRequestDTO;
 import com.esail.serverAlarma.models.Usuario;
 import com.esail.serverAlarma.service.UsuarioService;
 import org.springframework.web.bind.annotation.*;
@@ -107,5 +108,13 @@ public class UsuariosRestController {
     @GetMapping("/existe/{username}")
     public boolean verificarUsuarioPorUsername(@PathVariable String username) {
         return usuarioService.existeUsuarioPorUsername(username);
+    }
+
+    @PostMapping("/login")
+    public boolean login(@RequestBody LoginRequestDTO login) {
+        return usuarioService.verificarLogin(
+                login.getUsername(),
+                login.getPassword()
+        );
     }
 }

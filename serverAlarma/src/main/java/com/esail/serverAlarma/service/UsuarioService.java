@@ -80,5 +80,8 @@ public class UsuarioService {
         return usuarioRepository.existsByUsername(username);
     }
 
+    public boolean verificarLogin(String username, String password) {
+        return usuarioRepository.findByUsername(username).map(usuario -> usuario.getPassword().equals(password)).orElse(false);
+    }
 
 }
