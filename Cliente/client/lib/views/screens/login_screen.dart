@@ -27,19 +27,32 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _attemptLogin() async {
+    // 1. Recogemos la munición
+    final String username = _userController.text.trim();
+    final String password = _passwordController.text.trim();
+
+    if (username.isEmpty || password.isEmpty) {
+      // Si falta pólvora, lanzamos una bengala de aviso (SnackBar)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡No puedes iniciar sesion con campos vacíos! Rellena los datos.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return; // ¡Abortamos el disparo! El código de abajo no se ejecuta.
+    }
+
     final viewModel = context.read<LoginViewModel>();
 
     // Disparamos la petición
-    final success = await viewModel.login(
-      _userController.text.trim(),
-      _passwordController.text,
-    );
+    final success = await viewModel.login(username, password);
 
     // ¡CRÍTICO! Si el usuario cerró la app mientras cargaba, el "context" ya no existe.
     if (!mounted) return;
 
     if (success) {
-      // ¡Impacto directo! Navegamos y destruimos la ruta anterior
+      // ¡Impacto directo! Navegamos al tesoro
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),

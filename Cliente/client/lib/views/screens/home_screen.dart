@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/login_viewmodel.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -10,14 +11,13 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔭 Leemos al usuario desde el ViewModel
     final viewModel = context.watch<LoginViewModel>();
     final user = viewModel.currentUser;
 
     // Si por algún motivo llegamos aquí y el usuario es null, mostramos un error
     if (user == null) {
       return const Scaffold(
-        body: Center(child: Text('Error: No se encontraron datos del tripulante.')),
+        body: Center(child: Text('Error: No se encontraron datos.')),
       );
     }
 
@@ -26,6 +26,19 @@ class HomeScreen extends StatelessWidget {
         title: Text('Perfil de ${user.username}'),
         backgroundColor: goldenBrown,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.exit_to_app),
+              tooltip: 'Cerrar Sesión',
+              onPressed: () {
+              context.read<LoginViewModel>().logout();
+              Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                 );
+              },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -45,7 +58,7 @@ class HomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '¡Bienvenido a bordo!',
+                      '¡Bienvenido!',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     Text(
@@ -68,7 +81,7 @@ class HomeScreen extends StatelessWidget {
             ),
             const Divider(color: goldenBrown),
 
-            // 📜 Lista de Jornadas
+            // Lista de Jornadas
             Expanded(
               child: user.jornadas.isEmpty
                   ? const Center(child: Text('Aún no tienes jornadas registradas.'))

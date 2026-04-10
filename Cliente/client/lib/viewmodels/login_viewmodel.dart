@@ -32,7 +32,7 @@ class LoginViewModel extends ChangeNotifier {
         _currentUser = user as UserModel?;
         return true;
       } else {
-        _errorMessage = 'Credenciales incorrectas. ¿Eres un espía de la Marina?';
+        _errorMessage = 'Credenciales incorrectas.';
         return false;
       }
     } catch (e) {
@@ -46,4 +46,11 @@ class LoginViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void logout(){
+    _currentUser = null;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
 }

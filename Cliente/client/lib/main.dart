@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // ¡La munición clave que nos faltaba!
+import 'package:provider/provider.dart';
 import 'views/screens/login_screen.dart';
-import 'viewmodels/login_viewmodel.dart'; // Importamos al estratega
+import 'viewmodels/login_viewmodel.dart';
 
 void main() {
   runApp(const EsailItApp());
@@ -12,10 +12,8 @@ class EsailItApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🛡️ ¡EL ESCUDO MÁGICO! Envolvemos la app en un MultiProvider
     return MultiProvider(
       providers: [
-        // Aquí nacen los ViewModels. Sobrevivirán mientras la app esté viva.
         ChangeNotifierProvider(create: (_) => LoginViewModel()),
       ],
       child: MaterialApp(
