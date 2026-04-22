@@ -101,4 +101,10 @@ public class UsuarioService {
                 jornadas
         );
     }
+
+    public void guardarTokenDispositivo(Integer usuarioId, String token) {
+        Usuario usuario = usuarioRepository.findById(usuarioId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        usuario.setDeviceToken(token);
+        usuarioRepository.save(usuario);
+    }
 }

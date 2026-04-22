@@ -11,7 +11,7 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**") // Aplica a todas las rutas que empiecen por /api/
                 .allowedOrigins("http://localhost:3050") // SOLO permite a tu app de Flutter
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Permite estos métodos (OPTIONS es vital para navegadores)
+                .allowedMethods("GET", "POST", "PUT","PATCH", "DELETE", "OPTIONS") // Permite estos métodos (OPTIONS es vital para navegadores)
                 .allowedHeaders("*") // Permite cualquier cabecera (incluyendo el JSON)
                 .allowCredentials(true); // Necesario si en el futuro usas Cookies o Tokens de sesión
     }

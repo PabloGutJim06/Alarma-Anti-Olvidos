@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface RegistroRepository extends JpaRepository<Registro, Integer> {
     List<Registro> findByJornadaId(Integer jornadaId);
+    boolean existsByJornadaIdAndTituloContainingIgnoreCase(Integer jornadaId, String titulo);
 }

@@ -26,6 +26,9 @@ public class Usuario {
     @Column(nullable = false)
     private boolean type;
 
+    @Column(name="device_token", nullable = true)
+    private String deviceToken;
+
     // 'mappedBy' indica que la entidad 'Jornada' es dueña de la relación (campo 'usuario').
     // 'cascade = CascadeType.ALL' significa que si borras al usuario, se borran sus jornadas.
     // 'orphanRemoval = true' borra las jornadas si las sacas de esta lista
@@ -62,6 +65,10 @@ public class Usuario {
     public void setType(boolean type) {
         this.type = type;
     }
+
+    public String getDeviceToken() {return deviceToken;}
+
+    public void setDeviceToken(String deviceToken) {this.deviceToken = deviceToken;}
 
     public Integer getId() {
         return id;

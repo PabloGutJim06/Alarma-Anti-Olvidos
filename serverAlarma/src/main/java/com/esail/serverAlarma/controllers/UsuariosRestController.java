@@ -123,4 +123,9 @@ public class UsuariosRestController {
     public UsuarioResponseDTO obtenerUsuarioConSusJornadas(@PathVariable String username) {
         return usuarioService.obtenerUsuarioConJornada(username);
     }
+
+    @PatchMapping(value = "/{id}/token", consumes = "text/plain")
+    public void actualizarToken(@PathVariable Integer id, @RequestBody String token) {
+        usuarioService.guardarTokenDispositivo(id, token);
+    }
 }
