@@ -21,6 +21,9 @@ import java.util.List;
 @Service
 public class NotificacionService {
     @Autowired
+    private WindowsNotificationService windowsService;
+
+    @Autowired
     private JornadaRepository jornadaRepository;
 
     @Autowired
@@ -29,49 +32,58 @@ public class NotificacionService {
     //Hacer que se ejecute cada minuto
     @Transactional
     @Scheduled(fixedRate = 60000)
-    public void revisarOlvidosDeFichaje(){
-        LocalTime ahora  = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
-        LocalDate hoy =  LocalDate.now();
+    public void revisarOlvidosDeFichaje() {
+        LocalTime ahora = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
+        LocalDate hoy = LocalDate.now();
 
-        // --- Buscamos jornadas que empezaron hace 10 minutos ---
+        // Buscamos jornadas que empezaron hace 10 minutos
         LocalTime horaObjetivo = ahora.minusMinutes(10);
 
-        System.out.println("Buscando jornadas para hoy a las: " + horaObjetivo);
         List<Jornada> jornadasAControlar = jornadaRepository.findByDiaSemanaAndHoraInicio(hoy, horaObjetivo);
-        System.out.println("Jornadas ecnontradas: " + jornadasAControlar.size());
 
-        for(Jornada jornada : jornadasAControlar){
+        for (Jornada jornada : jornadasAControlar) {
             boolean fichado = registroRepository.existsByJornadaIdAndTituloContainingIgnoreCase(jornada.getId(), "Inicio");
 
-            if (!fichado){
-                 enviarNotificacionEmergente(jornada.getUsuario());
+            if (!fichado) {
+                // 2. Llamamos al método híbrido que gestiona ambos canales
+                enviarNotificacionEmergente(jornada.getUsuario());
             }
         }
     }
-    private void enviarNotificacionEmergente(Usuario usuario){
-        // Comprobamos si el usuario tiene un token guardado
-        String token = usuario.getDeviceToken();
-        if (token == null || token.isEmpty()) {
-            System.out.println("El usuario " + usuario.getUsername() + " no tiene token de dispositivo registrado. No se puede enviar push. ");
-            return;
-        }
 
-        try{
+    private void enviarNotificacionEmergente(Usuario usuario) {
+        String titulo = "¡Alarma Anti-Olvidos!";
+        String mensaje = "Hola " + usuario.getUsername() + ", parece que no has fichado.";
+
+        // 1. Intentar por Windows (vía WebSocket)
+        // La app de Windows estará escuchando en /topic/notificaciones/nombreUsuario
+        windowsService.enviarNotificacionWindows(usuario.getUsername(), titulo, mensaje);
+
+        // 2. Intentar por Firebase (Móvil)
+        String token = usuario.getDeviceToken();
+        if (token != null && !token.isEmpty()) {
+            enviarNotificacionFirebase(token, titulo, mensaje);
+        } else {
+            System.out.println("Aviso: El usuario " + usuario.getUsername() + " no tiene token de Firebase.");
+        }
+    }
+
+
+    private void enviarNotificacionFirebase(String token, String titulo, String mensaje) {
+        try {
             Notification notification = Notification.builder()
-                    .setTitle("¡Alarma Anti-Olvidos!")
-                    .setBody("Hola " + usuario.getUsername() + ", parece que tu jornada ha empezado pero no has fichado. ¡Entra a la app!")
+                    .setTitle(titulo)
+                    .setBody(mensaje)
                     .build();
 
             Message message = Message.builder()
                     .setToken(token)
                     .setNotification(notification)
-                    .putData("tipoAlarma", "inicio_jornada") // Puedes enviar datos "invisibles" extra aquí
                     .build();
 
-            String response = FirebaseMessaging.getInstance().send(message);
-            System.out.println("Notificación enviada con éxito a " + usuario.getUsername() + ". ID del mensaje: " + response);
-        }catch (Exception e) {
-            System.err.println("Error al enviar la notificación a " + usuario.getUsername() + ": " + e.getMessage());
+            FirebaseMessaging.getInstance().send(message);
+        } catch (Exception e) {
+            System.err.println("Error en Firebase: " + e.getMessage());
         }
     }
 }

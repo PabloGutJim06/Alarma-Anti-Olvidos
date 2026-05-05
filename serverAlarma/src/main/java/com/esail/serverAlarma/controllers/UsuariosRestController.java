@@ -1,9 +1,13 @@
 package com.esail.serverAlarma.controllers;
 
 import com.esail.serverAlarma.dto.LoginRequestDTO;
+import com.esail.serverAlarma.dto.LoginResponseDTO;
 import com.esail.serverAlarma.dto.UsuarioResponseDTO;
 import com.esail.serverAlarma.models.Usuario;
+import com.esail.serverAlarma.service.JwtService;
 import com.esail.serverAlarma.service.UsuarioService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,9 +17,11 @@ import java.util.List;
 public class UsuariosRestController {
 
     private final UsuarioService usuarioService;
+    private final JwtService jwtService;
 
-    public UsuariosRestController(UsuarioService usuarioService) {
+    public UsuariosRestController(UsuarioService usuarioService, JwtService jwtService) {
         this.usuarioService = usuarioService;
+        this.jwtService = jwtService;
     }
 
     /**
@@ -112,11 +118,15 @@ public class UsuariosRestController {
     }
 
     @PostMapping("/login")
-    public boolean login(@RequestBody LoginRequestDTO login) {
-        return usuarioService.verificarLogin(
-                login.getUsername(),
-                login.getPassword()
-        );
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO login) {
+        boolean esValido = usuarioService.verificarLogin(login.getUsername(), login.getPassword());
+
+        if (esValido) {
+            String token = jwtService.generarToken(login.getUsername());
+            return ResponseEntity.ok(new LoginResponseDTO(token, login.getUsername()));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales incorrectas");
+        }
     }
 
     @GetMapping("/me/{username}")
