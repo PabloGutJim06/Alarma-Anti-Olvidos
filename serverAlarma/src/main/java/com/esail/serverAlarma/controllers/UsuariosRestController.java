@@ -138,4 +138,25 @@ public class UsuariosRestController {
     public void actualizarToken(@PathVariable Integer id, @RequestBody String token) {
         usuarioService.guardarTokenDispositivo(id, token);
     }
+
+    @GetMapping("/verificar-sesion")
+    public ResponseEntity<?> verificarSesion(@RequestHeader("Authorization") String authHeader) {
+        // 1. Extraer el token (quitando la palabra "Bearer " si el cliente la envía)
+        String token = (authHeader != null && authHeader.startsWith("Bearer "))
+                ? authHeader.substring(7)
+                : authHeader;
+
+        // 2. Validar el token usando tu JwtService
+        if (token != null && jwtService.esTokenValido(token)) {
+            String username = jwtService.extraerUsername(token);
+
+            // 3. Si es válido, devolvemos los datos del usuario (usando tu DTO existente)
+            UsuarioResponseDTO usuarioData = usuarioService.obtenerUsuarioConJornada(username);
+            return ResponseEntity.ok(usuarioData);
+        } else {
+            // 4. Si el token expiró o es falso, el cliente debe redirigir al Login manual
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Sesión expirada o inválida");
+        }
+    }
+
 }
