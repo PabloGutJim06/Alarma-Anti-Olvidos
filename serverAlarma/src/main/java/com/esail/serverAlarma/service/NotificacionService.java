@@ -1,89 +1,50 @@
 package com.esail.serverAlarma.service;
 
 import com.esail.serverAlarma.models.Jornada;
-import com.esail.serverAlarma.models.Registro;
-import com.esail.serverAlarma.models.Usuario;
 import com.esail.serverAlarma.repo.JornadaRepository;
-import com.esail.serverAlarma.repo.RegistroRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
+import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Solo responsable de la patrulla periódica.
+ * Sin @Transactional — la transacción vive en JornadaNotificacionProcessor,
+ * una por jornada, independientes entre sí.
+ */
 @Service
 public class NotificacionService {
-    @Autowired
-    private WindowsNotificationService windowsService;
 
-    @Autowired
-    private JornadaRepository jornadaRepository;
+    private final JornadaRepository jornadaRepository;
+    private final JornadaNotificacionProcessor processor;
 
-    @Autowired
-    private RegistroRepository registroRepository;
+    public NotificacionService(JornadaRepository jornadaRepository,
+                               JornadaNotificacionProcessor processor) {
+        this.jornadaRepository = jornadaRepository;
+        this.processor = processor;
+    }
 
-    //Hacer que se ejecute cada minuto
-    @Transactional
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 60000, initialDelay = 60000)
     public void revisarOlvidosDeFichaje() {
-        LocalTime ahora = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
-        LocalDate hoy = LocalDate.now();
+        LocalDateTime ahora = LocalDateTime.now();
+        LocalDate hoy = ahora.toLocalDate();
 
-        // Buscamos jornadas que empezaron hace 10 minutos
-        LocalTime horaObjetivo = ahora.minusMinutes(10);
+        List<Jornada> candidatos = jornadaRepository
+                .findCandidatosOlvido(hoy, ahora.toLocalTime());
 
-        List<Jornada> jornadasAControlar = jornadaRepository.findByDiaSemanaAndHoraInicio(hoy, horaObjetivo);
+        System.out.println("🔍 [Scheduler] " + ahora + " — candidatos encontrados: " + candidatos.size());
 
-        for (Jornada jornada : jornadasAControlar) {
-            boolean fichado = registroRepository.existsByJornadaIdAndTituloContainingIgnoreCase(jornada.getId(), "Inicio");
-
-            if (!fichado) {
-                // 2. Llamamos al método híbrido que gestiona ambos canales
-                enviarNotificacionEmergente(jornada.getUsuario());
+        for (Jornada jornada : candidatos) {
+            try {
+                processor.procesar(jornada, ahora);
+            } catch (Exception e) {
+                // Si una jornada falla, logamos y continuamos con la siguiente.
+                // El bucle no muere por un error puntual.
+                System.err.println("Error procesando jornada "
+                        + jornada.getId() + ": " + e.getMessage());
             }
-        }
-    }
-
-    private void enviarNotificacionEmergente(Usuario usuario) {
-        String titulo = "¡Alarma Anti-Olvidos!";
-        String mensaje = "Hola " + usuario.getUsername() + ", parece que no has fichado.";
-
-        // 1. Intentar por Windows (vía WebSocket)
-        // La app de Windows estará escuchando en /topic/notificaciones/nombreUsuario
-        windowsService.enviarNotificacionWindows(usuario.getUsername(), titulo, mensaje);
-
-        // 2. Intentar por Firebase (Móvil)
-        String token = usuario.getDeviceToken();
-        if (token != null && !token.isEmpty()) {
-            enviarNotificacionFirebase(token, titulo, mensaje);
-        } else {
-            System.out.println("Aviso: El usuario " + usuario.getUsername() + " no tiene token de Firebase.");
-        }
-    }
-
-
-    private void enviarNotificacionFirebase(String token, String titulo, String mensaje) {
-        try {
-            Notification notification = Notification.builder()
-                    .setTitle(titulo)
-                    .setBody(mensaje)
-                    .build();
-
-            Message message = Message.builder()
-                    .setToken(token)
-                    .setNotification(notification)
-                    .build();
-
-            FirebaseMessaging.getInstance().send(message);
-        } catch (Exception e) {
-            System.err.println("Error en Firebase: " + e.getMessage());
         }
     }
 }

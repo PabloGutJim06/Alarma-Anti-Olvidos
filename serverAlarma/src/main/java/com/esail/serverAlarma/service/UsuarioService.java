@@ -1,6 +1,6 @@
 package com.esail.serverAlarma.service;
 
-import com.esail.serverAlarma.dto.JornadaDTO;
+import com.esail.serverAlarma.dto.JornadaResponseDTO;
 import com.esail.serverAlarma.dto.UsuarioResponseDTO;
 import com.esail.serverAlarma.models.Usuario;
 import com.esail.serverAlarma.repo.UsuarioRepository;
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service //Donde va la lógica del proyecto
-public class UsuarioService {
+public class    UsuarioService {
     private final UsuarioRepository usuarioRepository;
 
     public UsuarioService(UsuarioRepository usuarioRepository) {
@@ -86,12 +86,26 @@ public class UsuarioService {
         return usuarioRepository.findByUsername(username).map(usuario -> usuario.getPassword().equals(password)).orElse(false);
     }
 
-    public UsuarioResponseDTO obtenerUsuarioConJornada(String username){
+    public UsuarioResponseDTO obtenerUsuarioConJornada(String username) {
         Usuario usuario = usuarioRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("No encontrado"));
 
-        List<JornadaDTO> jornadas = usuario.getJornadas().stream()
-                .map(j -> new JornadaDTO(j.getId(), j.getDia_semana(),j.getType(),j.getHora_inicio(),j.getHora_fin()))
+        List<JornadaResponseDTO> jornadas = usuario.getJornadas().stream()
+                .map(j -> {
+                    JornadaResponseDTO dto = new JornadaResponseDTO();
+                    dto.setId(j.getId());
+                    dto.setDia_semana(j.getDia_semana());
+                    dto.setType(j.getType());
+                    dto.setHora_inicio(j.getHora_inicio());
+                    dto.setHoraAlmuerzo(j.getHoraAlmuerzo());
+                    dto.setHoraVuelta(j.getHoraVuelta());
+                    dto.setHora_fin(j.getHora_fin());
+                    dto.setRealInicio(j.getRealInicio());
+                    dto.setRealAlmuerzoInicio(j.getRealAlmuerzoInicio());
+                    dto.setRealAlmuerzoFin(j.getRealAlmuerzoFin());
+                    dto.setRealFin(j.getRealFin());
+                    return dto;
+                })
                 .toList();
 
         return new UsuarioResponseDTO(
@@ -101,7 +115,6 @@ public class UsuarioService {
                 jornadas
         );
     }
-
     public void guardarTokenDispositivo(Integer usuarioId, String token) {
         Usuario usuario = usuarioRepository.findById(usuarioId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         usuario.setDeviceToken(token);
