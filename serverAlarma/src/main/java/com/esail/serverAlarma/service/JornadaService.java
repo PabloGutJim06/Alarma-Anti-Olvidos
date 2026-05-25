@@ -33,7 +33,7 @@ public class JornadaService {
     // Método privado centralizado. Si añades un campo a Jornada,
     // solo lo tocas aquí — no en cada endpoint.
     // ─────────────────────────────────────────
-    private JornadaResponseDTO toResponseDTO(Jornada j) {
+    JornadaResponseDTO toResponseDTO(Jornada j) {
         JornadaResponseDTO dto = new JornadaResponseDTO();
         dto.setId(j.getId());
         dto.setDia_semana(j.getDia_semana());
@@ -104,6 +104,7 @@ public class JornadaService {
     // UPDATE
     // ─────────────────────────────────────────
     public JornadaResponseDTO actualizarJornada(Integer id, JornadaDTO dto) {
+        System.out.println("⚠️ [PUT] actualizarJornada llamado para id=" + id);
         Jornada existente = jornadaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Jornada", id));
 
@@ -130,6 +131,7 @@ public class JornadaService {
     // ─────────────────────────────────────────
     @Transactional
     public JornadaResponseDTO registrarFichajeReal(Integer id, String tipo) {
+        System.out.println("⚠️ [FICHAR] registrarFichajeReal id=" + id + " tipo=" + tipo);
         Jornada jornada = jornadaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Jornada", id));
 

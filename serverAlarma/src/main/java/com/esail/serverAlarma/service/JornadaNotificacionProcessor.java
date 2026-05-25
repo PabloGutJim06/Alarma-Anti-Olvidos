@@ -39,65 +39,73 @@ public class JornadaNotificacionProcessor {
      */
     @Transactional
     public void procesar(Jornada jornada, LocalDateTime ahora) {
-        Usuario usuario = jornada.getUsuario();
+        Jornada j = jornadaRepository.findById(jornada.getId()).orElse(null);
+        if (j == null) return;
 
-        // FIN
-        if (jornada.getRealFin() == null
-                && jornada.getHora_fin() != null
-                && jornada.getHora_fin().isBefore(ahora.toLocalTime())) {
+        Usuario usuario = jornada.getUsuario();
+        LocalTime ahoraTime = ahora.toLocalTime();
+
+        // FIN — solo si el anterior (ALMUERZO_FIN) ya está fichado
+        // O si horaVuelta no ha pasado (jornada sin almuerzo)
+        if (j.getRealFin() == null
+                && j.getHora_fin() != null
+                && j.getHora_fin().isBefore(ahoraTime)
+                && (j.getRealAlmuerzoFin() != null
+                || j.getHoraVuelta() == null
+                || !j.getHoraVuelta().isBefore(ahoraTime))) {
 
             boolean disparado = notificarSiProcede(
                     usuario, "¡No has fichado la salida!", ahora,
-                    jornada.getHora_fin(),                // ← hora prevista
-                    jornada::getUltimoAvisoFin,
-                    jornada::setUltimoAvisoFin
-            );
-            if (disparado) jornadaRepository.save(jornada);
+                    j.getHora_fin(), j::getUltimoAvisoFin, j::setUltimoAvisoFin);
+            System.out.println("🔔 [Processor] FIN disparado=" + disparado);
+            if (disparado) jornadaRepository.save(j);
             return;
         }
 
-        // ALMUERZO FIN
-        if (jornada.getRealAlmuerzoFin() == null
-                && jornada.getHoraVuelta() != null
-                && jornada.getHoraVuelta().isBefore(ahora.toLocalTime())) {
+        // ALMUERZO_FIN — solo si el anterior (ALMUERZO_INICIO) ya está fichado
+        // O si horaAlmuerzo no ha pasado (jornada sin almuerzo)
+        if (j.getRealAlmuerzoFin() == null
+                && j.getHoraVuelta() != null
+                && j.getHoraVuelta().isBefore(ahoraTime)
+                && (j.getRealAlmuerzoInicio() != null
+                || j.getHoraAlmuerzo() == null
+                || !j.getHoraAlmuerzo().isBefore(ahoraTime))) {
 
             boolean disparado = notificarSiProcede(
                     usuario, "¡No has fichado la vuelta del almuerzo!", ahora,
-                    jornada.getHoraVuelta(),              // ← hora prevista
-                    jornada::getUltimoAvisoAlmuerzoFin,
-                    jornada::setUltimoAvisoAlmuerzoFin
-            );
-            if (disparado) jornadaRepository.save(jornada);
+                    j.getHoraVuelta(), j::getUltimoAvisoAlmuerzoFin, j::setUltimoAvisoAlmuerzoFin);
+            System.out.println("🔔 [Processor] ALMUERZO_FIN disparado=" + disparado);
+            if (disparado) jornadaRepository.save(j);
             return;
         }
 
-        // ALMUERZO INICIO
-        if (jornada.getRealAlmuerzoInicio() == null
-                && jornada.getHoraAlmuerzo() != null
-                && jornada.getHoraAlmuerzo().isBefore(ahora.toLocalTime())) {
+        // ALMUERZO_INICIO — solo si el anterior (INICIO) ya está fichado
+        // O si hora_inicio no ha pasado
+        if (j.getRealAlmuerzoInicio() == null
+                && j.getHoraAlmuerzo() != null
+                && j.getHoraAlmuerzo().isBefore(ahoraTime)
+                && (j.getRealInicio() != null
+                || j.getHora_inicio() == null
+                || !j.getHora_inicio().isBefore(ahoraTime))) {
 
             boolean disparado = notificarSiProcede(
                     usuario, "¡No has fichado el inicio del almuerzo!", ahora,
-                    jornada.getHoraAlmuerzo(),            // ← hora prevista
-                    jornada::getUltimoAvisoAlmuerzoInicio,
-                    jornada::setUltimoAvisoAlmuerzoInicio
-            );
-            if (disparado) jornadaRepository.save(jornada);
+                    j.getHoraAlmuerzo(), j::getUltimoAvisoAlmuerzoInicio, j::setUltimoAvisoAlmuerzoInicio);
+            System.out.println("🔔 [Processor] ALMUERZO_INICIO disparado=" + disparado);
+            if (disparado) jornadaRepository.save(j);
             return;
         }
 
-        // INICIO
-        if (jornada.getRealInicio() == null
-                && jornada.getHora_inicio() != null
-                && jornada.getHora_inicio().isBefore(ahora.toLocalTime())) {
+        // INICIO — siempre es el primero, sin condición de anterior
+        if (j.getRealInicio() == null
+                && j.getHora_inicio() != null
+                && j.getHora_inicio().isBefore(ahoraTime)) {
 
             boolean disparado = notificarSiProcede(
                     usuario, "¡No has fichado la entrada!", ahora,
-                    jornada.getHora_inicio(),             // ← hora prevista
-                    jornada::getUltimoAvisoInicio,
-                    jornada::setUltimoAvisoInicio
-            );
-            if (disparado) jornadaRepository.save(jornada);
+                    j.getHora_inicio(), j::getUltimoAvisoInicio, j::setUltimoAvisoInicio);
+            System.out.println("🔔 [Processor] INICIO disparado=" + disparado);
+            if (disparado) jornadaRepository.save(j);
         }
     }
 
