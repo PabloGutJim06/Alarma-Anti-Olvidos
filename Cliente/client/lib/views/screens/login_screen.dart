@@ -1,7 +1,9 @@
+// lib/views/screens/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/login_viewmodel.dart';
-import 'home_screen.dart';
+import 'main_navigation_screen.dart';
+import '../../main.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,7 +13,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // Controladores para atrapar la munición (texto)
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -20,49 +21,43 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    // ¡REGLA DE ORO! Siempre destruye los controladores para evitar memory leaks
     _userController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   void _attemptLogin() async {
-    // 1. Recogemos la munición
     final String username = _userController.text.trim();
     final String password = _passwordController.text.trim();
 
     if (username.isEmpty || password.isEmpty) {
-      // Si falta pólvora, lanzamos una bengala de aviso (SnackBar)
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('¡No puedes iniciar sesion con campos vacíos! Rellena los datos.'),
+          content: Text('¡No puedes iniciar sesión con campos vacíos!'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
       );
-      return; // ¡Abortamos el disparo! El código de abajo no se ejecuta.
+      return;
     }
 
     final viewModel = context.read<LoginViewModel>();
 
-    // Disparamos la petición
-    final success = await viewModel.login(username, password);
+    // navigatorKey viene de main.dart — no hace falta pasarlo como parámetro
+    final success = await viewModel.login(username, password, navigatorKey);
 
-    // ¡CRÍTICO! Si el usuario cerró la app mientras cargaba, el "context" ya no existe.
     if (!mounted) return;
 
     if (success) {
-      // ¡Impacto directo! Navegamos al tesoro
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Escuchamos el ViewModel para saber si hay errores o si está cargando
     final viewModel = context.watch<LoginViewModel>();
 
     return Scaffold(
@@ -106,20 +101,23 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20.0),
 
-                // Mostrar mensaje de error si existe
                 if (viewModel.errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 20.0),
                     child: Text(
                       viewModel.errorMessage!,
-                      style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
 
-                // Botón de Login (O indicador de carga)
                 viewModel.isLoading
-                    ? const Center(child: CircularProgressIndicator(color: goldenBrown))
+                    ? const Center(
+                  child: CircularProgressIndicator(color: goldenBrown),
+                )
                     : ElevatedButton(
                   onPressed: _attemptLogin,
                   style: ElevatedButton.styleFrom(
@@ -133,7 +131,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
 
                 const SizedBox(height: 40.0),
-                // ... (Mantén aquí el Row de "¿No tienes cuenta?" del código anterior)
               ],
             ),
           ),

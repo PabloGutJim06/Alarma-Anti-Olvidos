@@ -1,14 +1,34 @@
+import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../models/user_model.dart';
+import '../config/app_config.dart';
 
 class AuthService {
-  // Ajusta esto a tu ruta base real en Spring Boot
-  final String _baseUrl = 'http://localhost:8080/api/usuarios';
+  // 1. Configuración inicial
+  final String _baseUrl = AppConfig.baseUrl;
+  final _storage = const FlutterSecureStorage(); // Nuestra caja fuerte para el JWT
+
+  // --- MÉTODOS DE SESIÓN ---
+
+  // Obtener el token guardado
+  Future<String?> getToken() async {
+    return await _storage.read(key: 'jwt_token');
+  }
+
+  // Cerrar sesión (limpiar caja fuerte)
+  Future<void> logout() async {
+    await _storage.delete(key: 'jwt_token');
+    await _storage.delete(key: 'username');
+  }
+
+  // --- LÓGICA DE LOGIN PRINCIPAL ---
 
   Future<UserModel?> login(String username, String password) async {
     try {
-      // 💥 DISPARO 1: Hablar con el guardia (Validar contraseña)
+      // 💥 DISPARO 1: Login y obtención del JWT
       final loginResponse = await http.post(
         Uri.parse('$_baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
@@ -16,35 +36,100 @@ class AuthService {
       );
 
       if (loginResponse.statusCode == 200) {
-        // Comprobamos si el guardia nos deja pasar (puede llegar como bool o string)
-        final dynamic isValido = jsonDecode(loginResponse.body);
+        final Map<String, dynamic> loginData = jsonDecode(loginResponse.body);
 
-        if (isValido == true || isValido == 'true') {
-          // 💥 DISPARO 2: ¡El guardia dijo sí! Ahora vamos a la bóveda a por los datos
+        // Extraemos el Token que genera tu JwtService en el servidor
+        final String? jwt = loginData['token'];
+
+        if (jwt != null) {
+          // 🛡️ Guardamos el JWT y el username para el auto-login
+          await _storage.write(key: 'jwt_token', value: jwt);
+          await _storage.write(key: 'username', value: username);
+
+          // 💥 DISPARO 2: Obtener perfil completo usando el JWT
           final perfilResponse = await http.get(
-            // Fíjate que esto es un GET y le pasamos el username en la URL
             Uri.parse('$_baseUrl/me/$username'),
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $jwt', // Mandamos el sello de seguridad
+            },
           );
 
           if (perfilResponse.statusCode == 200) {
-            // ¡Botín asegurado! Lo convertimos a nuestro objeto Dart
-            final Map<String, dynamic> data = jsonDecode(perfilResponse.body);
-            return UserModel.fromJson(data);
+            final Map<String, dynamic> userData = jsonDecode(perfilResponse.body);
+            UserModel user = UserModel.fromJson(userData);
+
+            // 💥 DISPARO 3: Actualizar el Token de Firebase (Notificaciones)
+            // Lo hacemos de forma asíncrona para no bloquear al usuario
+            _updateFirebaseToken(user.id, jwt);
+
+            return user;
           } else {
-            throw Exception('El guardia me dejó pasar, pero la bóveda estaba cerrada.');
+            throw Exception('Error al obtener perfil: ${perfilResponse.statusCode}');
           }
         } else {
-          // El guardia dijo false (contraseña incorrecta)
+          // El servidor no devolvió un token (quizás login incorrecto)
           return null;
         }
+      } else if (loginResponse.statusCode == 401) {
+        return null; // Credenciales incorrectas
       } else {
-        throw Exception('El guardia me ignoró. Error del servidor: ${loginResponse.statusCode}');
+        throw Exception('Error del servidor: ${loginResponse.statusCode}');
       }
     } catch (e) {
-      // Capturamos el error real y lo mostramos en consola
-      print('🔥 ERROR DEL KRAKEN (AuthService): $e');
-      throw Exception('Error de conexión en el doble disparo: $e');
+      print('🔥 ERROR EN AUTH_SERVICE: $e');
+      rethrow;
+    }
+  }
+
+  Future<UserModel?> verificarSesion(String token) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/verificar-sesion'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token', // Enviamos el JWT
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Si el servidor dice OK, parseamos el JSON del usuario
+        return UserModel.fromJson(jsonDecode(response.body));
+      } else {
+        // Si es 401 o cualquier otro, la sesión no es válida
+        return null;
+      }
+    } catch (e) {
+      print('🔥 ERROR AL VERIFICAR SESIÓN: $e');
+      return null;
+    }
+  }
+
+  // --- LÓGICA DE FIREBASE (Notificaciones) ---
+
+  Future<void> _updateFirebaseToken(int userId, String jwt) async {
+    try {
+      if (Platform.isWindows) {
+        print("ℹ️ Windows no usa Firebase Messaging. Saltando token.");
+        return;
+      }
+      String? deviceToken = await FirebaseMessaging.instance.getToken();
+      if (deviceToken != null) {
+        final response = await http.patch(
+          Uri.parse('$_baseUrl/$userId/token'),
+          headers: {
+            'Content-Type': 'text/plain',
+            'Authorization': 'Bearer $jwt', // También protegemos este envío
+          },
+          body: deviceToken,
+        );
+
+        if (response.statusCode == 200) {
+          print("✅ Token de Firebase actualizado en BD.");
+        }
+      }
+    } catch (e) {
+      print("⚠️ Error actualizando token de Firebase: $e");
     }
   }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "245217712334",
+    "project_id": "alarmaantiolvidos",
+    "storage_bucket": "alarmaantiolvidos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:245217712334:android:d0fe128e00a3ad2bb2189f",
+        "android_client_info": {
+          "package_name": "com.esail.client"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIHY-Pfic4ihEFDmqpHDhQuVZjR9XQlUI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
