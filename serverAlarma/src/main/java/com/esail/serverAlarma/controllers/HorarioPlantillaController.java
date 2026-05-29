@@ -1,11 +1,13 @@
 package com.esail.serverAlarma.controllers;
 
+import com.esail.serverAlarma.dto.HorarioPlantillaRequestDTO;
 import com.esail.serverAlarma.dto.JornadaResponseDTO;
 import com.esail.serverAlarma.models.HorarioPlantilla;
 import com.esail.serverAlarma.service.HorarioPlantillaService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.DayOfWeek;
 import java.util.List;
 
 @RestController
@@ -37,4 +39,12 @@ public class HorarioPlantillaController {
     public JornadaResponseDTO generarJornadaHoy(@PathVariable Integer usuarioId) {
         return plantillaService.generarJornadaDeHoy(usuarioId);
     }
+//    @PutMapping("/{diaSemana}")
+//    @ResponseStatus(HttpStatus.OK)
+//    public HorarioPlantilla actualizarHorario(
+//            @PathVariable Integer usuarioId,
+//            @PathVariable DayOfWeek diaSemana,
+//            @RequestBody HorarioPlantillaRequestDTO dto) {
+//        return plantillaService.actualizarPlantilla(usuarioId, diaSemana, dto);
+//    }
 }

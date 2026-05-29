@@ -4,6 +4,7 @@ package com.esail.serverAlarma.service;
 import com.esail.serverAlarma.models.Jornada;
 import com.esail.serverAlarma.models.Usuario;
 import com.esail.serverAlarma.repo.JornadaRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +25,8 @@ public class JornadaNotificacionProcessor {
     private final JornadaRepository jornadaRepository;
     private final WindowsNotificationService windowsService;
 
-    private static final long MINUTOS_ENTRE_AVISOS = 10;
+    @Value("${notificacion.minutos-entre-avisos}")
+    private long MINUTOS_ENTRE_AVISOS;
 
     public JornadaNotificacionProcessor(JornadaRepository jornadaRepository,
                                         WindowsNotificationService windowsService) {
@@ -57,7 +59,7 @@ public class JornadaNotificacionProcessor {
             boolean disparado = notificarSiProcede(
                     usuario, "¡No has fichado la salida!", ahora,
                     j.getHora_fin(), j::getUltimoAvisoFin, j::setUltimoAvisoFin);
-            System.out.println("🔔 [Processor] FIN disparado=" + disparado);
+            System.out.println(" [Processor] FIN disparado=" + disparado);
             if (disparado) jornadaRepository.save(j);
             return;
         }
@@ -74,7 +76,7 @@ public class JornadaNotificacionProcessor {
             boolean disparado = notificarSiProcede(
                     usuario, "¡No has fichado la vuelta del almuerzo!", ahora,
                     j.getHoraVuelta(), j::getUltimoAvisoAlmuerzoFin, j::setUltimoAvisoAlmuerzoFin);
-            System.out.println("🔔 [Processor] ALMUERZO_FIN disparado=" + disparado);
+            System.out.println(" [Processor] ALMUERZO_FIN disparado=" + disparado);
             if (disparado) jornadaRepository.save(j);
             return;
         }
@@ -91,7 +93,7 @@ public class JornadaNotificacionProcessor {
             boolean disparado = notificarSiProcede(
                     usuario, "¡No has fichado el inicio del almuerzo!", ahora,
                     j.getHoraAlmuerzo(), j::getUltimoAvisoAlmuerzoInicio, j::setUltimoAvisoAlmuerzoInicio);
-            System.out.println("🔔 [Processor] ALMUERZO_INICIO disparado=" + disparado);
+            System.out.println(" [Processor] ALMUERZO_INICIO disparado=" + disparado);
             if (disparado) jornadaRepository.save(j);
             return;
         }
@@ -104,7 +106,7 @@ public class JornadaNotificacionProcessor {
             boolean disparado = notificarSiProcede(
                     usuario, "¡No has fichado la entrada!", ahora,
                     j.getHora_inicio(), j::getUltimoAvisoInicio, j::setUltimoAvisoInicio);
-            System.out.println("🔔 [Processor] INICIO disparado=" + disparado);
+            System.out.println(" [Processor] INICIO disparado=" + disparado);
             if (disparado) jornadaRepository.save(j);
         }
     }
@@ -124,20 +126,20 @@ public class JornadaNotificacionProcessor {
 
         if (ultimaVez == null) {
             // Primer aviso: solo si han pasado al menos 10 min desde la hora prevista
-            System.out.println("⏱️ [Notificacion] minutosDesdePrevista=" + minutosDesdePrevista
+            System.out.println(" [Notificacion] minutosDesdePrevista=" + minutosDesdePrevista
                     + " — umbral=" + MINUTOS_ENTRE_AVISOS
                     + " — puedeNotificar=" + (minutosDesdePrevista >= MINUTOS_ENTRE_AVISOS));
             puedeNotificar = minutosDesdePrevista >= MINUTOS_ENTRE_AVISOS;
         } else {
             long minDesdeUltimo = Duration.between(ultimaVez, ahora).toMinutes();
-            System.out.println("⏱️ [Notificacion] minDesdeUltimoAviso=" + minDesdeUltimo
+            System.out.println(" [Notificacion] minDesdeUltimoAviso=" + minDesdeUltimo
                     + " — puedeNotificar=" + (minDesdeUltimo >= MINUTOS_ENTRE_AVISOS));
             puedeNotificar = minDesdeUltimo >= MINUTOS_ENTRE_AVISOS;
         }
 
         if (!puedeNotificar) return false;
 
-        String titulo = "⏰ Fichaje pendiente";
+        String titulo = " Fichaje pendiente";
         String cuerpo = "Hola " + usuario.getUsername() + ", " + mensajeCuerpo;
 
         windowsService.enviarNotificacionWindows(usuario.getUsername(), titulo, cuerpo);

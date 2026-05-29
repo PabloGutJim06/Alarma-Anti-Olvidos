@@ -34,7 +34,7 @@ public class NotificacionService {
         List<Jornada> candidatos = jornadaRepository
                 .findCandidatosOlvido(hoy, ahora.toLocalTime());
 
-        System.out.println("🔍 [Scheduler] " + ahora + " — candidatos encontrados: " + candidatos.size());
+        System.out.println("[Scheduler] " + ahora + " — candidatos encontrados: " + candidatos.size());
 
         for (Jornada jornada : candidatos) {
             try {

@@ -23,6 +23,6 @@ public class WindowsNotificationService {
         payload.put("body", mensaje);
 
         messagingTemplate.convertAndSend(destino, payload);
-        System.out.println("🖥️ Notificación enviada vía WebSocket a: " + username);
+        System.out.println("Notificación enviada vía WebSocket a: " + username);
     }
 }

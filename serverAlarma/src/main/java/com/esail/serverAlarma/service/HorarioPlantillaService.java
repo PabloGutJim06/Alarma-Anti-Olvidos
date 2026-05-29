@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
+import com.esail.serverAlarma.dto.HorarioPlantillaRequestDTO;
+import java.time.DayOfWeek;
 
 @Service
 public class HorarioPlantillaService {
@@ -114,7 +116,7 @@ public class HorarioPlantillaService {
                     .anyMatch(j -> j.getDia_semana().equals(hoy));
 
             if (yaExiste) {
-                resultado.add("⏭️ " + username + " — ya tenía jornada para hoy");
+                resultado.add( username + " — ya tenía jornada para hoy");
                 continue;
             }
 
@@ -129,7 +131,7 @@ public class HorarioPlantillaService {
             jornada.setHora_fin(plantilla.getHoraFin());
 
             jornadaRepository.save(jornada);
-            resultado.add("✅ " + username + " — jornada creada: "
+            resultado.add(username + " — jornada creada: "
                     + plantilla.getHoraInicio() + " → " + plantilla.getHoraFin());
         }
 
@@ -144,7 +146,7 @@ public class HorarioPlantillaService {
      */
     @Scheduled(cron = "0 0 6 * * MON-FRI")
     public void generarJornadasAutomaticamente() {
-        System.out.println("🕕 [Scheduler] Generando jornadas automáticas para hoy...");
+        System.out.println("[Scheduler] Generando jornadas automáticas para hoy...");
         List<String> resultado = generarJornadasDeHoyParaTodos();
         resultado.forEach(System.out::println);
     }
@@ -175,7 +177,50 @@ public class HorarioPlantillaService {
 
         if (jornadasExistentes >= plantillasDeHoy.size()) return;
 
-        System.out.println("⚠️ [Recuperación] Faltan jornadas para hoy. Generando...");
+        System.out.println("[Recuperación] Faltan jornadas para hoy. Generando...");
         generarJornadasDeHoyParaTodos().forEach(System.out::println);
     }
+//
+//    /**
+//     * Actualiza la plantilla de un día concreto.
+//     * Si ya existe jornada de hoy para ese día → actualiza sus horas también.
+//     */
+//    @Transactional
+//    public HorarioPlantilla actualizarPlantilla(Integer usuarioId,
+//                                                DayOfWeek diaSemana,
+//                                                HorarioPlantillaRequestDTO dto) {
+//        // 1. Buscar la plantilla existente
+//        HorarioPlantilla plantilla = plantillaRepository
+//                .findByUsuarioIdAndDiaSemana(usuarioId, diaSemana)
+//                .orElseThrow(() -> new IllegalStateException(
+//                        "No existe plantilla para " + diaSemana + " del usuario " + usuarioId));
+//
+//        // 2. Actualizar la plantilla
+//        if (dto.getHoraInicio()   != null) plantilla.setHoraInicio(dto.getHoraInicio());
+//        if (dto.getHoraAlmuerzo() != null) plantilla.setHoraAlmuerzo(dto.getHoraAlmuerzo());
+//        if (dto.getHoraVuelta()   != null) plantilla.setHoraVuelta(dto.getHoraVuelta());
+//        if (dto.getHoraFin()      != null) plantilla.setHoraFin(dto.getHoraFin());
+//        if (dto.getActivo()       != null) plantilla.setActivo(dto.getActivo());
+//
+//        plantillaRepository.save(plantilla);
+//
+//        // 3. Si hoy es ese día → actualizar también la jornada de hoy si existe
+//        LocalDate hoy = LocalDate.now();
+//        if (hoy.getDayOfWeek().equals(diaSemana)) {
+//            jornadaRepository.findByUsuarioId(usuarioId)
+//                    .stream()
+//                    .filter(j -> j.getDia_semana().equals(hoy))
+//                    .findFirst()
+//                    .ifPresent(jornada -> {
+//                        if (dto.getHoraInicio()   != null) jornada.setHora_inicio(dto.getHoraInicio());
+//                        if (dto.getHoraAlmuerzo() != null) jornada.setHoraAlmuerzo(dto.getHoraAlmuerzo());
+//                        if (dto.getHoraVuelta()   != null) jornada.setHoraVuelta(dto.getHoraVuelta());
+//                        if (dto.getHoraFin()     != null) jornada.setHora_fin(dto.getHoraFin());
+//                        jornadaRepository.save(jornada);
+//                        System.out.println("Jornada de hoy actualizada para usuario " + usuarioId);
+//                    });
+//        }
+//
+//        return plantilla;
+//    }
 }
